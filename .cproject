@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?fileVersion 4.0.0?>
+
+<cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
+	<storageModule moduleId="org.eclipse.cdt.core.settings">
+		<cconfiguration id="cdt.managedbuild.toolchain.gnu.cross.base.1588831336">
+			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.toolchain.gnu.cross.base.1588831336" moduleId="org.eclipse.cdt.core.settings" name="Default">
+				<externalSettings/>
+				<extensions>
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.GNU_ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+				</extensions>
+			</storageModule>
+			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+				<configuration artifactName="${ProjName}" buildProperties="" description="" id="cdt.managedbuild.toolchain.gnu.cross.base.1588831336" name="Default" parent="org.eclipse.cdt.build.core.emptycfg">
+					<folderInfo id="cdt.managedbuild.toolchain.gnu.cross.base.1588831336.789132296" name="/" resourcePath="">
+						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.base.2130653155" name="cdt.managedbuild.toolchain.gnu.cross.base" superClass="cdt.managedbuild.toolchain.gnu.cross.base">
+							<option id="cdt.managedbuild.option.gnu.cross.prefix.368740071" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix"/>
+							<option id="cdt.managedbuild.option.gnu.cross.path.778381530" name="Path" superClass="cdt.managedbuild.option.gnu.cross.path"/>
+							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF;org.eclipse.cdt.core.GNU_ELF" id="cdt.managedbuild.targetPlatform.gnu.cross.664449628" isAbstract="false" osList="all" superClass="cdt.managedbuild.targetPlatform.gnu.cross"/>
+							<builder buildPath="${workspace_loc:/gyroking/demos/Tortilla-v2.0}" id="cdt.managedbuild.builder.gnu.cross.1764201938" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="cdt.managedbuild.builder.gnu.cross"/>
+							<tool id="cdt.managedbuild.tool.gnu.cross.c.compiler.2094812311" name="Cross GCC Compiler" superClass="cdt.managedbuild.tool.gnu.cross.c.compiler">
+								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.2037885017" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.1904165955" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler">
+								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1448783317" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.1910328113" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker"/>
+							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.828799462" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker">
+								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.10547327" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
+									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
+									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
+								</inputType>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.cross.archiver.262049745" name="Cross GCC Archiver" superClass="cdt.managedbuild.tool.gnu.cross.archiver"/>
+							<tool id="cdt.managedbuild.tool.gnu.cross.assembler.1071332153" name="Cross GCC Assembler" superClass="cdt.managedbuild.tool.gnu.cross.assembler">
+								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1791325214" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
+							</tool>
+						</toolChain>
+					</folderInfo>
+					<sourceEntries>
+						<entry excluding="os/kernel/templates|os/various/lwip_bindings|boards/ST_STM8S_DISCOVERY|boards/ST_STM8L_DISCOVERY|boards/ST_STM32VL_DISCOVERY|boards/ST_STM32L_DISCOVERY|boards/ST_STM32F4_DISCOVERY|boards/ST_STM3220G_EVAL|boards/ST_STM3210E_EVAL|boards/ST_STM3210C_EVAL|boards/simulator|boards/RAISONANCE_REVA_STM8S|boards/OLIMEX_STM32_P407|boards/OLIMEX_STM32_P107|boards/OLIMEX_STM32_P103|boards/OLIMEX_STM32_H103|boards/OLIMEX_STM32_103STK|boards/OLIMEX_SAM7_P256|boards/OLIMEX_SAM7_EX256|boards/OLIMEX_MSP430_P1611|boards/OLIMEX_LPC_P2148|boards/OLIMEX_AVR_MT_128|boards/OLIMEX_AVR_CAN|boards/NONSTANDARD_STM32F4_BARTHESS1|boards/GENERIC_SPC563|boards/EA_LPCXPRESSO_BB_1343|boards/EA_LPCXPRESSO_BB_1114|demos/Win32-MinGW|demos/STM8S-STM8S208-RC|demos/STM8S-STM8S105-DISCOVERY-STVD|demos/STM8L-STM8L152-DISCOVERY-STVD|demos/PPC-SPC563-GCC|demos/Posix-GCC|demos/MSP430-MSP430x1611-GCC|demos/AVR-ATmega128-GCC|demos/AVR-AT90CANx-GCC|demos/ARMCM4-STM32F407-LWIP|demos/ARMCM4-STM32F407-DISCOVERY|demos/ARMCM3-STM32L152-DISCOVERY|demos/ARMCM3-STM32F107-LWIP|demos/ARMCM3-STM32F107|demos/ARMCM3-STM32F103ZG-FATFS|demos/ARMCM3-STM32F103-G++|demos/ARMCM3-STM32F103-FATFS|demos/ARMCM3-STM32F103|demos/ARMCM3-STM32F100-DISCOVERY|demos/ARMCM3-LPC1343-LPCXPRESSO|demos/ARMCM3-GENERIC-KERNEL|demos/ARMCM0-LPC1114-LPCXPRESSO|demos/ARM7-LPC214x-GCC|demos/ARM7-LPC214x-G++|demos/ARM7-LPC214x-FATFS-GCC|demos/ARM7-AT91SAM7X-UIP-GCC|demos/ARM7-AT91SAM7X-LWIP-GCC|demos/ARM7-AT91SAM7X-GCC|demos/ARM7-AT91SAM7X-FATFS-GCC|demos/ARM7-AT91SAM7S-GCC|demos/ARM7-AT91SAM7S-FATFS-GCC|os/hal/templates|os/ports/GCC/ARMCMx/STM32L1xx|os/ports/GCC/SIMIA32|os/ports/GCC/PPC|os/ports/GCC/MSP430|os/ports/GCC/AVR|os/ports/GCC/ARMCMx/chcore_v6m.h|os/ports/GCC/ARMCMx/chcore_v6m.c|os/ports/GCC/ARMCMx/STM32F2xx|os/ports/GCC/ARMCMx/STM32F1xx|os/ports/GCC/ARMCMx/LPC13xx|os/ports/GCC/ARMCMx/LPC11xx|os/ports/GCC/ARM|os/ports/RVCT|os/ports/RC|os/ports/IAR|os/ports/cosmic|os/ports/common/ARMCMx/CMSIS/include/core_cm3.h|os/ports/common/ARMCMx/CMSIS/include/core_cm0.h|os/hal/platforms/Win32|os/hal/platforms/STM8S|os/hal/platforms/STM8L|os/hal/platforms/STM32L1xx|os/hal/platforms/STM32F2xx|os/hal/platforms/STM32F1xx|os/hal/platforms/STM32|os/hal/platforms/SPC56x|os/hal/platforms/Posix|os/hal/platforms/MSP430|os/hal/platforms/LPC214x|os/hal/platforms/LPC13xx|os/hal/platforms/LPC11xx|os/hal/platforms/AVR|os/hal/platforms/AT91SAM7|testhal|test" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+					</sourceEntries>
+				</configuration>
+			</storageModule>
+			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+		</cconfiguration>
+	</storageModule>
+	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+		<project id="gyroking.null.1059676907" name="gyroking"/>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Default">
+			<resource resourceType="PROJECT" workspacePath="/gyroking"/>
+		</configuration>
+	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.cross.base.1588831336;cdt.managedbuild.toolchain.gnu.cross.base.1588831336.789132296;cdt.managedbuild.tool.gnu.cross.c.compiler.2094812311;cdt.managedbuild.tool.gnu.c.compiler.input.2037885017">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
+			<profile id="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC">
+				<buildOutputProvider>
+					<openAction enabled="true" filePath=""/>
+					<parser enabled="true"/>
+				</buildOutputProvider>
+				<scannerInfoProvider id="specsFile">
+					<runAction arguments="-E -P -v -dD &quot;${plugin_state_location}/specs.c&quot;" command="/Users/xw/yagarto-4.7.1/bin/arm-none-eabi-gcc" useDefault="true"/>
+					<parser enabled="true"/>
+				</scannerInfoProvider>
+			</profile>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.cross.base.1588831336;cdt.managedbuild.toolchain.gnu.cross.base.1588831336.789132296;cdt.managedbuild.tool.gnu.cross.cpp.compiler.1904165955;cdt.managedbuild.tool.gnu.cpp.compiler.input.1448783317">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileCPP"/>
+			<profile id="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileCPP">
+				<buildOutputProvider>
+					<openAction enabled="true" filePath=""/>
+					<parser enabled="true"/>
+				</buildOutputProvider>
+				<scannerInfoProvider id="specsFile">
+					<runAction arguments="-E -P -v -dD &quot;${plugin_state_location}/specs.cpp&quot;" command="/Users/xw/yagarto-4.7.1/bin/arm-none-eabi-g++" useDefault="true"/>
+					<parser enabled="true"/>
+				</scannerInfoProvider>
+			</profile>
+		</scannerConfigBuildInfo>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+</cproject>
