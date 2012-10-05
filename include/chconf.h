@@ -1,6 +1,7 @@
 /*
     ChibiOS/RT - Copyright (C) 2006,2007,2008,2009,2010,
                  2011,2012 Giovanni Di Sirio.
+    Modifications (C) 2012 Xo Wang
 
     This file is part of ChibiOS/RT.
 

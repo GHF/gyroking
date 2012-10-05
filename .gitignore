@@ -1,0 +1,13 @@
+*.o
+*.elf
+*.bin
+*.hex
+*.d
+*.map
+*.dmp
+*.lst
+
+.DS_Store
+build
+.settings
+

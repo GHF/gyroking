@@ -63,7 +63,7 @@ endif
 PROJECT = ch
 
 # Imported source files and paths
-CHIBIOS = ../..
+CHIBIOS = ChibiOS
 include $(CHIBIOS)/boards/TORTILLA_V2_0/board.mk
 include $(CHIBIOS)/os/hal/platforms/STM32F4xx/platform.mk
 include $(CHIBIOS)/os/hal/hal.mk
