@@ -28,6 +28,8 @@
 
 #include "Tortilla.h"
 #include "A4960.h"
+#include "ADS1259.h"
+#include "chprintf.h"
 
 // heartbeat thread
 static WORKING_AREA(waHeartbeat, 128);
@@ -60,10 +62,11 @@ int main(void) {
 
     chThdSleepMilliseconds(200);
 
-    const SerialConfig btSerialConfig = { 921600, 0, USART_CR2_STOP1_BITS | USART_CR2_LINEN, USART_CR3_CTSE
-            | USART_CR3_RTSE };
+    // serial setup
+    const SerialConfig btSerialConfig = { 921600, 0, USART_CR2_STOP1_BITS, USART_CR3_CTSE | USART_CR3_RTSE };
     sdStart(&BT_SERIAL, &btSerialConfig);
 
+    // PWM setup
     const PWMConfig mPWMConfig = { STM32_TIMCLK1, PWM_PERIOD, nullptr, {
             { PWM_OUTPUT_DISABLED, nullptr },
             { PWM_OUTPUT_DISABLED, nullptr },
@@ -71,20 +74,33 @@ int main(void) {
             { PWM_OUTPUT_ACTIVE_HIGH, nullptr } }, 0, };
     pwmStart(&M1_PWM, &mPWMConfig);
 
+    // SPI setup
     // speed = pclk/8 = 5.25MHz
     const SPIConfig m1SPIConfig = { NULL, GPIOC, GPIOC_M1_NSS, SPI_CR1_DFF | SPI_CR1_BR_1 };
     const SPIConfig m2SPIConfig = { NULL, GPIOD, GPIOD_M2_NSS, SPI_CR1_DFF | SPI_CR1_BR_1 };
+    const SPIConfig adcSPIConfig = { NULL, GPIOA, GPIOA_ADC_NSS, SPI_CR1_BR_2 | SPI_CR1_CPHA };
     spiStart(&M1_SPI, &m1SPIConfig);
     spiStart(&M2_SPI, &m2SPIConfig);
+    spiStart(&ADC_SPI, &adcSPIConfig);
+
+    // motor setup
     A4960 m1(&M1_SPI, &M1_PWM, M1_PWM_CHAN);
     A4960 m2(&M2_SPI, &M2_PWM, M2_PWM_CHAN);
 
+    // ADC setup
+    ADS1259 adc(&ADC_SPI);
+
+    // start slave threads
     chThdCreateStatic(waHeartbeat, sizeof(waHeartbeat), IDLEPRIO, tfunc_t(threadHeartbeat), nullptr);
     chThdCreateStatic(waDebugEcho, sizeof(waDebugEcho), LOWPRIO, tfunc_t(threadDebugEcho), nullptr);
 
     palClearPad(GPIOC, GPIOC_LEDB);
 
     while (TRUE) {
-        chThdSleepMilliseconds(1000);
+        int32_t adcReading;
+        if (adc.read(adcReading)) {
+            chprintf((BaseChannel *)&BT_SERIAL, "0x%x\r\n", adcReading);
+            chThdSleepMilliseconds(100);
+        }
     }
 }

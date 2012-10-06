@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2012 Xo Wang
+ *  Copyright (C) 2011--2012 Xo Wang
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,25 +23,48 @@
  *  in this Software without prior written authorization from Xo Wang.
  */
 
-#ifndef TORTILLA_H_
-#define TORTILLA_H_
+#include "ch.h"
+#include "hal.h"
 
-#define NORETURN __attribute__((noreturn))
-#define ALIGNED(x) __attribute__((aligned(x)))
+#include "ads1259.h"
 
-#define BT_SERIAL (SD2)
+const uint8_t ADS1259::config[2] = { 0xD0, 0x05 }; // CONFIG2 set data rate 1200SPS
+const uint8_t ADS1259::OP_START = 0x08;
 
-#define ADC_SPI (SPID1)
+ADS1259::ADS1259(SPIDriver *spip) :
+        spip(spip) {
+    writeReg(0x1, 2, config); // configure
+    start(); // start conversions
+}
 
-#define M1_SPI (SPID2)
-#define M2_SPI (SPID3)
+void ADS1259::writeReg(uint8_t addr, uint8_t n, const uint8_t *data) {
+    const uint8_t opcodes[2] = { uint8_t(0x40 + (addr & 0xF)), uint8_t((n - 1) & 0xF) };
+    spiAcquireBus(spip);
+    spiSelect(spip);
+    spiSend(spip, 2, opcodes);
+    spiSend(spip, n, data);
+    spiUnselect(spip);
+    spiReleaseBus(spip);
+}
 
-#define PWM_FREQ 50000
-#define PWM_PERIOD (STM32_TIMCLK1 / PWM_FREQ)
+void ADS1259::start(void) {
+    spiAcquireBus(spip);
+    spiSelect(spip);
+    chThdSleepMicroseconds(100);
+    spiSend(spip, 1, &OP_START);
+    spiUnselect(spip);
+    spiReleaseBus(spip);
+}
 
-#define M1_PWM (PWMD3)
-#define M1_PWM_CHAN (3)
-#define M2_PWM (PWMD3)
-#define M2_PWM_CHAN (2)
+bool ADS1259::read(int32_t &reading) {
+    spiAcquireBus(spip);
+    spiSelect(spip);
+    uint8_t data[4];
+    spiReceive(spip, 4, data);
+    spiUnselect(spip);
+    spiReleaseBus(spip);
 
-#endif /* TORTILLA_H_ */
+    reading = ((int8_t(data[0]) >> 7) << 24) + (data[0] << 16) + (data[1] << 8) + data[2];
+    const uint8_t checksum = (data[0] + data[1] + data[2] + 0x9b) & 0x7f;
+    return (checksum == data[3]);
+}

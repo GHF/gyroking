@@ -161,7 +161,6 @@
                              PIN_AFIO_AF(GPIOA_BT_RTS, 7) |                 \
                              PIN_AFIO_AF(GPIOA_BT_TX, 7) |                  \
                              PIN_AFIO_AF(GPIOA_BT_RX, 7) |                  \
-                             PIN_AFIO_AF(GPIOA_ADC_NSS, 5) |                \
                              PIN_AFIO_AF(GPIOA_ADC_SCK, 5) |                \
                              PIN_AFIO_AF(GPIOA_ADC_MISO, 5) |               \
                              PIN_AFIO_AF(GPIOA_ADC_MOSI, 5))
