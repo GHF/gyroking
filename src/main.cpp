@@ -37,22 +37,16 @@ NORETURN static void threadHeartbeat(void *arg) {
     (void) arg;
     chRegSetThreadName("heartbeat");
     while (TRUE) {
-        palTogglePad(GPIOB, GPIOB_LEDY);
+        palTogglePad(GPIOB, GPIOB_LED2);
         chThdSleepMilliseconds(1000);
     }
     chThdExit(0);
 }
 
-static BaseChannel * const debugChan = (BaseChannel *) &SD2;
-
-static WORKING_AREA(waDebugEcho, 128);
-NORETURN static void threadDebugEcho(void *arg) {
-    (void) arg;
-    chRegSetThreadName("debugEcho");
-    while (TRUE) {
-        const uint8_t ch = chIOGet(debugChan);
-        chIOPut(debugChan, ch);
-    }
+static WORKING_AREA(waIO, 8192);
+NORETURN static void threadIO(void *tortilla) {
+    chRegSetThreadName("IO");
+    static_cast<Tortilla *>(tortilla)->ioLoop();
     chThdExit(0);
 }
 
@@ -61,6 +55,11 @@ int main(void) {
     chSysInit();
 
     chThdSleepMilliseconds(200);
+
+    // input capture & high-res timer
+    const ICUConfig icuConfig = { ICU_INPUT_ACTIVE_HIGH, 1000000, nullptr, nullptr, nullptr, nullptr, nullptr };
+    icuStart(&TIMING_ICU, &icuConfig);
+    icuEnable(&TIMING_ICU);
 
     // serial setup
     const SerialConfig btSerialConfig = { 921600, 0, USART_CR2_STOP1_BITS, USART_CR3_CTSE | USART_CR3_RTSE };
@@ -90,17 +89,14 @@ int main(void) {
     // ADC setup
     ADS1259 adc(&ADC_SPI);
 
+    // initialize control structure
+    Tortilla tortilla(m1, m2, adc, &TIMING_ICU);
+
     // start slave threads
     chThdCreateStatic(waHeartbeat, sizeof(waHeartbeat), IDLEPRIO, tfunc_t(threadHeartbeat), nullptr);
-    chThdCreateStatic(waDebugEcho, sizeof(waDebugEcho), LOWPRIO, tfunc_t(threadDebugEcho), nullptr);
+    chThdCreateStatic(waIO, sizeof(waIO), LOWPRIO, tfunc_t(threadIO), &tortilla);
 
+    // done with setup
     palClearPad(GPIOC, GPIOC_LEDB);
-
-    while (TRUE) {
-        int32_t adcReading;
-        if (adc.read(adcReading)) {
-            chprintf((BaseChannel *)&BT_SERIAL, "0x%x\r\n", adcReading);
-            chThdSleepMilliseconds(100);
-        }
-    }
+    tortilla.fastLoop();
 }

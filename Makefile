@@ -15,7 +15,7 @@ endif
 
 # C++ specific options here (added to USE_OPT).
 ifeq ($(USE_CPPOPT),)
-  USE_CPPOPT = -fno-rtti -std=c++0x
+  USE_CPPOPT = -fno-rtti -std=gnu++0x
 endif
 
 # Enable this if you want the linker to remove unused code and data
@@ -88,6 +88,7 @@ CSRC = $(PORTSRC) \
 CPPSRC = src/main.cpp \
 		 src/A4960.cpp \
 		 src/ADS1259.cpp \
+		 src/Tortilla.cpp \
 
 # C sources to be compiled in ARM mode regardless of the global setting.
 # NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
@@ -198,7 +199,7 @@ UINCDIR =
 ULIBDIR =
 
 # List all user libraries here
-ULIBS =
+ULIBS = -lm
 
 #
 # End of user defines

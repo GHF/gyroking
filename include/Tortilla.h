@@ -44,4 +44,32 @@
 #define M2_PWM (PWMD3)
 #define M2_PWM_CHAN (2)
 
+#define TIMING_ICU (ICUD2)
+
+class A4960;
+class ADS1259;
+struct ICUDriver;
+
+class Tortilla {
+public:
+    Tortilla(A4960 &m1, A4960 &m2, ADS1259 &adc, ICUDriver *icup);
+
+    NORETURN void ioLoop();
+    NORETURN void fastLoop();
+    NORETURN void watchLoop();
+
+protected:
+    A4960 &m1;
+    A4960 &m2;
+    ADS1259 &adc;
+    ICUDriver * const icup;
+
+    int32_t gyroBias;
+    float lastRate;
+    float currentRate;
+    float theta;
+
+    void initGyroBias();
+};
+
 #endif /* TORTILLA_H_ */

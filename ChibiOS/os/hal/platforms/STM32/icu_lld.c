@@ -109,9 +109,15 @@ static void icu_lld_serve_interrupt(ICUDriver *icup) {
   sr = icup->tim->SR & icup->tim->DIER;
   icup->tim->SR = 0;
   if ((sr & TIM_SR_CC1IF) != 0)
-    _icu_isr_invoke_period_cb(icup);
+    _icu_isr_invoke_ch0_edge_cb(icup);
   if ((sr & TIM_SR_CC2IF) != 0)
-    _icu_isr_invoke_width_cb(icup);
+    _icu_isr_invoke_ch1_edge_cb(icup);
+  if ((sr & TIM_SR_CC3IF) != 0)
+    _icu_isr_invoke_ch2_edge_cb(icup);
+  if ((sr & TIM_SR_CC4IF) != 0)
+    _icu_isr_invoke_ch3_edge_cb(icup);
+  if ((sr & TIM_SR_UIF) != 0)
+    _icu_isr_invoke_overflow_cb(icup);
 }
 
 /*===========================================================================*/
@@ -389,11 +395,15 @@ void icu_lld_start(ICUDriver *icup) {
   else {
     /* Driver re-configuration scenario, it must be stopped first.*/
     icup->tim->CR1    = 0;                  /* Timer disabled.              */
+    icup->tim->CR2    = 0;                  /* Timer options cleared.       */
     icup->tim->DIER   = 0;                  /* All IRQs disabled.           */
     icup->tim->SR     = 0;                  /* Clear eventual pending IRQs. */
     icup->tim->CCR[0] = 0;                  /* Comparator 1 disabled.       */
     icup->tim->CCR[1] = 0;                  /* Comparator 2 disabled.       */
+    icup->tim->CCR[2] = 0;                  /* Comparator 3 disabled.       */
+    icup->tim->CCR[3] = 0;                  /* Comparator 4 disabled.       */
     icup->tim->CNT    = 0;                  /* Counter reset to zero.       */
+    icup->tim->SMCR   = 0;                  /* Disable slave mode           */
   }
 
   /* Timer configuration.*/
@@ -402,25 +412,22 @@ void icu_lld_start(ICUDriver *icup) {
               ((psc + 1) * icup->config->frequency) == icup->clock,
               "icu_lld_start(), #1", "invalid frequency");
   icup->tim->PSC  = (uint16_t)psc;
-  icup->tim->ARR   = 0xFFFF;
+  icup->tim->ARR   = 0xFFFFFFFF;
+  icup->tim->EGR |= TIM_EGR_UG;      /* generate update event to update PSC */
 
   /* CCMR1_CC1S = 01 = CH1 Input on TI1.
-     CCMR1_CC2S = 10 = CH2 Input on TI1.*/
+     CCMR1_CC2S = 01 = CH2 Input on TI2.*/
   icup->tim->CCMR1 = TIM_CCMR1_CC1S_0 |
-                     TIM_CCMR1_CC2S_1;
-  /* SMCR_TS  = 101, input is TI1FP1.
-     SMCR_SMS = 100, reset on rising edge.*/
-  icup->tim->SMCR  = TIM_SMCR_TS_2 | TIM_SMCR_TS_0 |
-                     TIM_SMCR_SMS_2;
-  /* The CCER settings depend on the selected trigger mode.
-     ICU_INPUT_ACTIVE_HIGH: Active on rising edge, idle on falling edge.
-     ICU_INPUT_ACTIVE_LOW:  Active on falling edge, idle on rising edge.*/
-  if (icup->config->mode == ICU_INPUT_ACTIVE_HIGH)
-    icup->tim->CCER = TIM_CCER_CC1E |
-                      TIM_CCER_CC2E | TIM_CCER_CC2P;
-  else
-    icup->tim->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P |
-                      TIM_CCER_CC2E;
+                     TIM_CCMR1_CC2S_0;
+  /* CCMR2_CC3S = 01 = CH3 Input on TI3.
+     CCMR2_CC4S = 01 = CH4 Input on TI4.*/
+  icup->tim->CCMR2 = TIM_CCMR2_CC3S_0 |
+                     TIM_CCMR2_CC4S_0;
+  /* Input capture on both edges */
+  icup->tim->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P | TIM_CCER_CC1NP |
+                    TIM_CCER_CC2E | TIM_CCER_CC2P | TIM_CCER_CC2NP |
+                    TIM_CCER_CC3E | TIM_CCER_CC3P | TIM_CCER_CC3NP |
+                    TIM_CCER_CC4E | TIM_CCER_CC4P | TIM_CCER_CC4NP;
 }
 
 /**
@@ -435,6 +442,7 @@ void icu_lld_stop(ICUDriver *icup) {
   if (icup->state == ICU_READY) {
     /* Clock deactivation.*/
     icup->tim->CR1  = 0;                    /* Timer disabled.              */
+    icup->tim->CR2  = 0;                    /* Reset timer config.          */
     icup->tim->DIER = 0;                    /* All IRQs disabled.           */
     icup->tim->SR   = 0;                    /* Clear eventual pending IRQs. */
 
@@ -489,10 +497,16 @@ void icu_lld_stop(ICUDriver *icup) {
 void icu_lld_enable(ICUDriver *icup) {
 
   icup->tim->SR   = 0;                      /* Clear pending IRQs (if any). */
-  if (icup->config->period_cb != NULL)
+  if (icup->config->ch0_edge_cb != NULL)
     icup->tim->DIER |= TIM_DIER_CC1IE;
-  if (icup->config->width_cb != NULL)
+  if (icup->config->ch1_edge_cb != NULL)
     icup->tim->DIER |= TIM_DIER_CC2IE;
+  if (icup->config->ch2_edge_cb != NULL)
+    icup->tim->DIER |= TIM_DIER_CC3IE;
+  if (icup->config->ch3_edge_cb != NULL)
+    icup->tim->DIER |= TIM_DIER_CC4IE;
+  if (icup->config->overflow_cb != NULL)
+      icup->tim->DIER |= TIM_DIER_UIE;
   icup->tim->CR1  = TIM_CR1_URS | TIM_CR1_CEN;
 }
 
@@ -506,6 +520,7 @@ void icu_lld_enable(ICUDriver *icup) {
 void icu_lld_disable(ICUDriver *icup) {
 
   icup->tim->CR1  = 0;                      /* Initially stopped.           */
+  icup->tim->CR2  = 0;                      /* Reset timer config.          */
   icup->tim->SR   = 0;                      /* Clear pending IRQs (if any). */
   icup->tim->DIER = 0;                      /* Interrupts disabled.         */
 }

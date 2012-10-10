@@ -219,13 +219,25 @@ typedef struct {
    */
   icufreq_t                 frequency;
   /**
-   * @brief   Callback for pulse width measurement.
+   * @brief   Callback for channel 0 edge measurement.
    */
-  icucallback_t             width_cb;
+  icucallback_t             ch0_edge_cb;
   /**
-   * @brief   Callback for cycle period measurement.
+   * @brief   Callback for channel 1 edge measurement.
    */
-  icucallback_t             period_cb;
+  icucallback_t             ch1_edge_cb;
+  /**
+   * @brief   Callback for channel 2 edge measurement.
+   */
+  icucallback_t             ch2_edge_cb;
+  /**
+   * @brief   Callback for channel 3 edge measurement.
+   */
+  icucallback_t             ch3_edge_cb;
+  /**
+   * @brief   Callback for timer overflow.
+   */
+  icucallback_t             overflow_cb;
   /* End of the mandatory fields.*/
 } ICUConfig;
 
@@ -269,7 +281,31 @@ struct ICUDriver {
  *
  * @notapi
  */
-#define icu_lld_get_width(icup) ((icup)->tim->CCR[1] + 1)
+#define icu_lld_get_ch0_edge(icup) ((icup)->tim->CCR[0])
+
+/**
+ * @brief   Returns the width of the latest pulse.
+ * @details The pulse width is defined as number of ticks between the start
+ *          edge and the stop edge.
+ *
+ * @param[in] icup      pointer to the @p ICUDriver object
+ * @return              The number of ticks.
+ *
+ * @notapi
+ */
+#define icu_lld_get_ch1_edge(icup) ((icup)->tim->CCR[1])
+
+/**
+ * @brief   Returns the width of the latest pulse.
+ * @details The pulse width is defined as number of ticks between the start
+ *          edge and the stop edge.
+ *
+ * @param[in] icup      pointer to the @p ICUDriver object
+ * @return              The number of ticks.
+ *
+ * @notapi
+ */
+#define icu_lld_get_ch2_edge(icup) ((icup)->tim->CCR[2])
 
 /**
  * @brief   Returns the width of the latest cycle.
@@ -281,7 +317,7 @@ struct ICUDriver {
  *
  * @notapi
  */
-#define icu_lld_get_period(icup) ((icup)->tim->CCR[0] + 1)
+#define icu_lld_get_ch3_edge(icup) ((icup)->tim->CCR[3])
 
 /*===========================================================================*/
 /* External declarations.                                                    */

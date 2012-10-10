@@ -23,7 +23,12 @@
  *  in this Software without prior written authorization from Xo Wang.
  */
 
+#include "ch.h"
+#include "hal.h"
+
+#include "Tortilla.h"
 #include "A4960.h"
+#include "chprintf.h"
 
 #include <stdint.h>
 

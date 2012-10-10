@@ -107,28 +107,52 @@ typedef void (*icucallback_t)(ICUDriver *icup);
 #define icuDisableI(icup) icu_lld_disable(icup)
 
 /**
- * @brief   Returns the width of the latest pulse.
- * @details The pulse width is defined as number of ticks between the start
- *          edge and the stop edge.
+ * @brief   Returns the time of the last edge on channel 0.
+ * @details The time is defined as number of ticks since the start of the
+ *          input capture.
  *
  * @param[in] icup      pointer to the @p ICUDriver object
  * @return              The number of ticks.
  *
  * @iclass
  */
-#define icuGetWidthI(icup) icu_lld_get_width(icup)
+#define icuGetCh0EdgeI(icup) icu_lld_get_ch0_edge(icup)
 
 /**
- * @brief   Returns the width of the latest cycle.
- * @details The cycle width is defined as number of ticks between a start
- *          edge and the next start edge.
+ * @brief   Returns the time of the last edge on channel 1.
+ * @details The time is defined as number of ticks since the start of the
+ *          input capture.
  *
  * @param[in] icup      pointer to the @p ICUDriver object
  * @return              The number of ticks.
  *
  * @iclass
  */
-#define icuGetPeriodI(icup) icu_lld_get_period(icup)
+#define icuGetCh1EdgeI(icup) icu_lld_get_ch1_edge(icup)
+
+/**
+ * @brief   Returns the time of the last edge on channel 2.
+ * @details The time is defined as number of ticks since the start of the
+ *          input capture.
+ *
+ * @param[in] icup      pointer to the @p ICUDriver object
+ * @return              The number of ticks.
+ *
+ * @iclass
+ */
+#define icuGetCh2EdgeI(icup) icu_lld_get_ch2_edge(icup)
+
+/**
+ * @brief   Returns the time of the last edge on channel 3.
+ * @details The time is defined as number of ticks since the start of the
+ *          input capture.
+ *
+ * @param[in] icup      pointer to the @p ICUDriver object
+ * @return              The number of ticks.
+ *
+ * @iclass
+ */
+#define icuGetCh3EdgeI(icup) icu_lld_get_ch3_edge(icup)
 /** @} */
 
 /**
@@ -136,29 +160,62 @@ typedef void (*icucallback_t)(ICUDriver *icup);
  * @{
  */
 /**
- * @brief   Common ISR code, ICU width event.
+ * @brief   Common ISR code, ICU channel 0 edge event.
  *
  * @param[in] icup      pointer to the @p ICUDriver object
  *
  * @notapi
  */
-#define _icu_isr_invoke_width_cb(icup) {                                    \
-  (icup)->state = ICU_IDLE;                                                 \
-  (icup)->config->width_cb(icup);                                           \
+#define _icu_isr_invoke_ch0_edge_cb(icup) {                                    \
+  (icup)->state = ICU_ACTIVE;                                                  \
+  (icup)->config->ch0_edge_cb(icup);                                           \
 }
 
 /**
- * @brief   Common ISR code, ICU period event.
+ * @brief   Common ISR code, ICU channel 1 edge event.
  *
  * @param[in] icup      pointer to the @p ICUDriver object
  *
  * @notapi
  */
-#define _icu_isr_invoke_period_cb(icup) {                                   \
-  icustate_t previous_state = (icup)->state;                                \
-  (icup)->state = ICU_ACTIVE;                                               \
-  if (previous_state != ICU_WAITING)                                        \
-    (icup)->config->period_cb(icup);                                        \
+#define _icu_isr_invoke_ch1_edge_cb(icup) {                                    \
+  (icup)->state = ICU_ACTIVE;                                                  \
+  (icup)->config->ch1_edge_cb(icup);                                           \
+}
+
+/**
+ * @brief   Common ISR code, ICU channel 2 edge event.
+ *
+ * @param[in] icup      pointer to the @p ICUDriver object
+ *
+ * @notapi
+ */
+#define _icu_isr_invoke_ch2_edge_cb(icup) {                                    \
+  (icup)->state = ICU_ACTIVE;                                                  \
+  (icup)->config->ch2_edge_cb(icup);                                           \
+}
+
+/**
+ * @brief   Common ISR code, ICU channel 3 edge event.
+ *
+ * @param[in] icup      pointer to the @p ICUDriver object
+ *
+ * @notapi
+ */
+#define _icu_isr_invoke_ch3_edge_cb(icup) {                                    \
+  (icup)->state = ICU_ACTIVE;                                                  \
+  (icup)->config->ch3_edge_cb(icup);                                           \
+}
+
+/**
+ * @brief   Common ISR code, ICU timer overflow event.
+ *
+ * @param[in] icup      pointer to the @p ICUDriver object
+ *
+ * @notapi
+ */
+#define _icu_isr_invoke_overflow_cb(icup) {                                 \
+  (icup)->config->overflow_cb(icup);                                        \
 }
 /** @} */
 
