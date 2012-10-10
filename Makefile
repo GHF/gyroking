@@ -64,11 +64,11 @@ PROJECT = ch
 
 # Imported source files and paths
 CHIBIOS = ChibiOS
-include $(CHIBIOS)/boards/TORTILLA_V2_0/board.mk
 include $(CHIBIOS)/os/hal/platforms/STM32F4xx/platform.mk
 include $(CHIBIOS)/os/hal/hal.mk
 include $(CHIBIOS)/os/ports/GCC/ARMCMx/STM32F4xx/port.mk
 include $(CHIBIOS)/os/kernel/kernel.mk
+include board/board.mk
 
 # Define linker script file here
 LDSCRIPT= $(PORTLD)/STM32F405xG.ld
