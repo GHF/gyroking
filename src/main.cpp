@@ -90,7 +90,7 @@ int main(void) {
     ADS1259 adc(&ADC_SPI);
 
     // initialize control structure
-    Tortilla tortilla(m1, m2, adc, &TIMING_ICU);
+    Tortilla tortilla(m1, m2, adc, &TIMING_ICU, &BT_SERIAL);
 
     // start slave threads
     chThdCreateStatic(waHeartbeat, sizeof(waHeartbeat), IDLEPRIO, tfunc_t(threadHeartbeat), nullptr);

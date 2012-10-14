@@ -52,7 +52,7 @@ struct ICUDriver;
 
 class Tortilla {
 public:
-    Tortilla(A4960 &m1, A4960 &m2, ADS1259 &adc, ICUDriver *icup);
+    Tortilla(A4960 &m1, A4960 &m2, ADS1259 &adc, ICUDriver *icup, SerialDriver *sdp);
 
     NORETURN void ioLoop();
     NORETURN void fastLoop();
@@ -63,6 +63,7 @@ protected:
     A4960 &m2;
     ADS1259 &adc;
     ICUDriver * const icup;
+    SerialDriver * const sdp;
 
     int32_t gyroBias;
     float lastRate;

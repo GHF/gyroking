@@ -39,25 +39,28 @@
 #include <cstdio>
 #include <cmath>
 
-Tortilla::Tortilla(A4960 &m1, A4960 &m2, ADS1259 &adc, ICUDriver *icup) :
-        m1(m1), m2(m2), adc(adc), icup(icup), gyroBias(0), lastRate(0), currentRate(0), theta(0) {
+Tortilla::Tortilla(A4960 &m1, A4960 &m2, ADS1259 &adc, ICUDriver *icup, SerialDriver *sdp) :
+        m1(m1), m2(m2), adc(adc), icup(icup), sdp(sdp), gyroBias(0), lastRate(0), currentRate(0), theta(0) {
 }
 
 void Tortilla::initGyroBias() {
     int32_t adcReading;
     int64_t sumReadings = 0;
     size_t numReadings = 0;
-    for (size_t i = 0; i < 2000U; i++) {
-        if (adc.read(adcReading)) {
+    systime_t ticks = chTimeNow();
+    for (size_t i = 0; i < 6000U; i++) {
+        if (adc.read(adcReading) && i >= 1000) {
             numReadings++;
             sumReadings += adcReading;
         }
-        chThdSleepMilliseconds(1);
+
+        ticks += MS2ST(1);
+        chThdSleepUntil(ticks);
     }
     gyroBias = sumReadings / numReadings;
 }
 
-static constexpr float SCALE_RAW_TO_RADSEC = float(50000.0 * (M_PI / 180.0) / double(0x7FFFFFUL));
+static constexpr float SCALE_RAW_TO_RADSEC = float(64000.0 * (M_PI / 180.0) / double(0x7FFFFFUL));
 
 static constexpr size_t LOOP_DELAY_US = 1000;
 static constexpr systime_t LOOP_DELAY = US2ST(LOOP_DELAY_US);
@@ -66,6 +69,7 @@ static constexpr float DT = LOOP_DELAY_US / 1000000.0;
 void Tortilla::fastLoop() {
     initGyroBias();
     palClearPad(GPIOB, GPIOB_LEDY);
+    palClearPad(GPIOB, GPIOB_LED1);
 
     systime_t ticks = chTimeNow();
     while (true) {
@@ -75,11 +79,15 @@ void Tortilla::fastLoop() {
 
             lastRate = currentRate;
             currentRate = rate;
-            theta += 0.5f * (currentRate + lastRate) * DT;
-            theta = remainder(theta, M_PI);
+            theta += (currentRate) * DT; // euler integration
+//            theta += 0.5f * (currentRate + lastRate) * DT; // trapezoidal integration
+            theta = ::remainderf(theta, float(2.0 * M_PI));
         }
 
-        palWritePad(GPIOC, GPIOC_LEDB, fabsf(theta) < 0.2f);
+        const bool blue = fabsf(theta) < 0.2f;
+        const bool yellow = !blue && fabsf(theta) < float(M_PI / 2.0);
+        palWritePad(GPIOC, GPIOC_LEDB, blue);
+        palWritePad(GPIOB, GPIOB_LEDY, yellow);
 
         ticks += LOOP_DELAY;
         chThdSleepUntil(ticks);
@@ -106,7 +114,7 @@ constexpr char IO_CMD_MOV = 'm';
 constexpr char IO_CMD_STOP = 's';
 
 void Tortilla::ioLoop() {
-    BaseChannel * const ioChan = (BaseChannel *) &BT_SERIAL;
+    BaseChannel * const ioChan = (BaseChannel *) sdp;
 
     uint8_t new_char;
     uint8_t timeout_counter = 0;
@@ -208,18 +216,22 @@ void Tortilla::ioLoop() {
 
             switch (command_code) {
             case IO_CMD_MOV: {
-                const int16_t x_mov = command_data[0] * 100L + command_data[1] * 10L + command_data[2] - 500;
-                const int16_t y_mov = command_data[3] * 100L + command_data[4] * 10L + command_data[5] - 500;
-                const int16_t spin = command_data[6] * 100L + command_data[7] * 10L + command_data[8] - 500;
+                const int16_t x_mov = command_data[0] * 100L + command_data[1] * 10L + command_data[2] - 500L;
+                const int16_t y_mov = command_data[3] * 100L + command_data[4] * 10L + command_data[5] - 500L;
+                const int16_t spin = command_data[6] * 100L + command_data[7] * 10L + command_data[8] - 500L;
 
-                const size_t numChars = snprintf(strBuffer, sizeof(strBuffer), "mov %d %d %d", x_mov, y_mov, spin);
+                const size_t numChars = snprintf(strBuffer,
+                        sizeof(strBuffer),
+                        "t: %ld",
+                        int32_t(theta * (180.0 / M_PI)));
                 chprintf(ioChan, "%%%c%c%s", 'a' + numChars, IO_INFO_MISC, strBuffer);
 
+                const bool enabled = (spin != 0);
                 const bool reversed = spin < 0;
                 const int throttle = std::min(abs(spin), 500);
-                m1.setDirection(reversed);
+                m1.setMode(enabled, reversed);
                 m1.setWidth(PWM_PERIOD * throttle / 500);
-                m2.setDirection(reversed);
+                m2.setMode(enabled, reversed);
                 m2.setWidth(PWM_PERIOD * throttle / 500);
                 break;
             }
@@ -230,13 +242,13 @@ void Tortilla::ioLoop() {
             }
 
             case IO_MOD_GYRO_BIAS: {
-                const int16_t new_bias = command_data[0] * 1000L + command_data[1] * 100L + command_data[2] * 10L
-                        + command_data[3] - 5000;
+                const int16_t new_gyro_bias = command_data[0] * 1000L + command_data[1] * 100L + command_data[2] * 10L
+                        + command_data[3] - 5000L;
                 break;
             }
 
             case IO_MOD_TRANS_BIAS: {
-                const int16_t new_bias = command_data[0] * 100L + command_data[1] * 10L + command_data[2] - 180;
+                const int16_t new_trans_bias = command_data[0] * 100L + command_data[1] * 10L + command_data[2] - 180L;
                 break;
             }
 
@@ -244,7 +256,7 @@ void Tortilla::ioLoop() {
                 break;
             }
 
-            const int calculated_rpm = 100;
+            const int calculated_rpm = ::abs(currentRate * float(60.0 * 0.5 / M_PI));
             chprintf(ioChan, "%%%c%c%.4d", 'a' + 4, IO_INFO_ROB_RPM, calculated_rpm);
         }
     }

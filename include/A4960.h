@@ -33,8 +33,12 @@ class A4960 {
 public:
     A4960(SPIDriver *spip, PWMDriver *pwmp, pwmchannel_t channel);
 
-    void setDirection(bool reverse) {
-        writeReg(0x7, reverse ? (config[0x7] | 0x2) : (config[0x7]));
+    void setMode(bool enable, bool reverse) {
+        uint16_t cfg = config[0x7];
+        cfg |= enable ? 0x1 : 0x0; // RUN bit
+        cfg |= reverse ? 0x2 : 0x0; // DIR bit
+        writeReg(0x7, cfg);
+//        writeReg(0x7, reverse ? (config[0x7] | 0x2) : (config[0x7]));
     }
 
     void setWidth(pwmcnt_t width) {
