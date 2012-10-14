@@ -40,8 +40,8 @@ const uint16_t A4960::config[8] = {
         (0x3 << 4) | (0x2), // 0.8ms min comm time, 24ms start comm time
         (0x9 << 8) | (0xf << 4) | (0x1), // 16.875deg phase adv, 100% ramp current, 0.4ms ramp rate
         (0x0), // fault detection all on
-        (0x0 << 10) | (0x3 << 7) | (0x0 << 6) | (0x0 << 4) | (0x1 << 3) | (0x0 << 2) | (0x0 << 1) | (0x1)
-        // auto BEMF hyst, 3.2us zx det window, no stop on fail, DIAG pin = fault, restart on loss of sync, brake off, forward, run
+        (0x0 << 10) | (0x3 << 7) | (0x0 << 6) | (0x0 << 4) | (0x1 << 3) | (0x0 << 2) | (0x0 << 1) | (0x0)
+        // auto BEMF hyst, 3.2us zx det window, no stop on fail, DIAG pin = fault, restart on loss of sync, brake off, forward, coast
 };
 
 A4960::A4960(SPIDriver *spip, PWMDriver *pwmp, pwmchannel_t channel) :

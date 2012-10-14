@@ -70,6 +70,10 @@ protected:
     float currentRate;
     float theta;
 
+    int throttle;
+    float joyAngle;
+    float joyMag;
+
     void initGyroBias();
 };
 

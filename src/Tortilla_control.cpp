@@ -34,13 +34,21 @@
 #include <algorithm>
 
 #include <stdint.h>
-#include <cstring>
-#include <cstdlib>
-#include <cstdio>
 #include <cmath>
 
 Tortilla::Tortilla(A4960 &m1, A4960 &m2, ADS1259 &adc, ICUDriver *icup, SerialDriver *sdp) :
-        m1(m1), m2(m2), adc(adc), icup(icup), sdp(sdp), gyroBias(0), lastRate(0), currentRate(0), theta(0) {
+        m1(m1),
+        m2(m2),
+        adc(adc),
+        icup(icup),
+        sdp(sdp),
+        gyroBias(0),
+        lastRate(0),
+        currentRate(0),
+        theta(0),
+        throttle(0),
+        joyAngle(0),
+        joyMag(0) {
 }
 
 void Tortilla::initGyroBias() {
@@ -81,183 +89,30 @@ void Tortilla::fastLoop() {
             currentRate = rate;
             theta += (currentRate) * DT; // euler integration
 //            theta += 0.5f * (currentRate + lastRate) * DT; // trapezoidal integration
-            theta = ::remainderf(theta, float(2.0 * M_PI));
+            theta = ::remainderf(theta, M_TWOPI);
         }
 
-        const bool blue = fabsf(theta) < 0.2f;
-        const bool yellow = !blue && fabsf(theta) < float(M_PI / 2.0);
+        pwmcnt_t m1Speed = throttle;
+        pwmcnt_t m2Speed = throttle;
+
+        const bool blue = ::fabsf(theta) < float(M_PI / 10.0);
         palWritePad(GPIOC, GPIOC_LEDB, blue);
-        palWritePad(GPIOB, GPIOB_LEDY, yellow);
+        if (joyMag == 0.f) {
+            const bool yellow = !blue && ::fabsf(::remainderf(theta * 5.f, M_TWOPI)) < float(M_PI_2);;
+            palWritePad(GPIOB, GPIOB_LEDY, yellow);
+        } else {
+            const bool yellow = fabsf(::remainderf(theta - joyAngle, M_TWOPI)) < std::max(0.2f, ::fabsf(joyMag * M_PI_4));
+            if (yellow) {
+                m1Speed = PWM_PERIOD;
+                m2Speed = 0;
+            }
+            palWritePad(GPIOB, GPIOB_LEDY, yellow);
+        }
+
+        m1.setWidth(m1Speed);
+        m2.setWidth(m2Speed);
 
         ticks += LOOP_DELAY;
         chThdSleepUntil(ticks);
-    }
-}
-
-constexpr char IO_START = '%';
-constexpr size_t OUTPUT_BUFFER_SIZE = 30;
-constexpr size_t COMMAND_DATA_BUFFER_SIZE = 27;
-
-constexpr systime_t IO_TIMEOUT = MS2ST(100);
-constexpr uint8_t IO_FREQ = 10;
-
-constexpr char IO_INFO_ACK = 'k';
-constexpr char IO_INFO_ROB_RPM = 'P';
-constexpr char IO_INFO_GYRO_BIAS = 'G';
-constexpr char IO_INFO_MOTOR_RPM = 'r';
-constexpr char IO_INFO_MISC = 'C';
-
-constexpr char IO_MOD_GYRO_BIAS = 'g';
-constexpr char IO_MOD_TRANS_BIAS = 't';
-
-constexpr char IO_CMD_MOV = 'm';
-constexpr char IO_CMD_STOP = 's';
-
-void Tortilla::ioLoop() {
-    BaseChannel * const ioChan = (BaseChannel *) sdp;
-
-    uint8_t new_char;
-    uint8_t timeout_counter = 0;
-
-    uint8_t command_length = 0; // set by LENGTH
-    uint8_t command_code = 0; // set by OPCODE
-    uint8_t command_data[COMMAND_DATA_BUFFER_SIZE]; // set by DATA
-    uint8_t command_data_index = 0; // set by OPCODE
-
-    enum {
-        START, LENGTH, OPCODE, DATA, DONE
-    } state;
-
-    state = START;
-
-    while (1) {
-        const msg_t getResult = chIOGetTimeout(ioChan, IO_TIMEOUT);
-        if (getResult == Q_TIMEOUT || getResult == Q_RESET) {
-            // timeout happened, clear buffer, check how many timeouts we've gotten
-            timeout_counter++;
-            if (timeout_counter == IO_FREQ) {
-                // 1 second has passed since successful communication with PC
-                m1.setWidth(0);
-                m2.setWidth(0);
-                // failsafe stop
-                timeout_counter = 0;
-            }
-            continue;
-        }
-
-        new_char = getResult;
-        timeout_counter = 0;
-
-        switch (state) {
-        case START: {
-            if (new_char == IO_START) {
-                state = LENGTH;
-            }
-            break;
-        }
-
-        case LENGTH: {
-            if (new_char >= 'a' && new_char <= 'z') {
-                command_length = new_char - 'a';
-                state = OPCODE;
-            } else if (new_char == IO_START) {
-                state = LENGTH;
-            } else {
-                state = START;
-            }
-            break;
-        }
-
-        case OPCODE: {
-            if ((new_char >= 'a' && new_char <= 'z') || (new_char >= 'A' && new_char <= 'Z')) {
-                command_code = new_char;
-                state = DATA;
-                command_data_index = 0;
-            } else if (new_char == IO_START) {
-                state = LENGTH;
-            } else {
-                state = START;
-            }
-            break;
-        }
-
-        case DATA: {
-            if (new_char >= '0' && new_char <= '9') {
-                command_data[command_data_index] = new_char - '0';
-                command_data_index++;
-
-                if (command_data_index == command_length || command_data_index >= COMMAND_DATA_BUFFER_SIZE) {
-                    state = DONE;
-                }
-            } else if (new_char == IO_START) {
-                state = LENGTH;
-            } else {
-                state = START;
-            }
-            break;
-        }
-
-        case DONE: {
-            if (new_char == IO_START) {
-                state = LENGTH;
-            } else {
-                state = START;
-            }
-            break;
-        }
-
-        default:
-            state = START;
-            break;
-        }
-
-        if (state == DONE) {
-            char strBuffer[26];
-
-            switch (command_code) {
-            case IO_CMD_MOV: {
-                const int16_t x_mov = command_data[0] * 100L + command_data[1] * 10L + command_data[2] - 500L;
-                const int16_t y_mov = command_data[3] * 100L + command_data[4] * 10L + command_data[5] - 500L;
-                const int16_t spin = command_data[6] * 100L + command_data[7] * 10L + command_data[8] - 500L;
-
-                const size_t numChars = snprintf(strBuffer,
-                        sizeof(strBuffer),
-                        "t: %ld",
-                        int32_t(theta * (180.0 / M_PI)));
-                chprintf(ioChan, "%%%c%c%s", 'a' + numChars, IO_INFO_MISC, strBuffer);
-
-                const bool enabled = (spin != 0);
-                const bool reversed = spin < 0;
-                const int throttle = std::min(abs(spin), 500);
-                m1.setMode(enabled, reversed);
-                m1.setWidth(PWM_PERIOD * throttle / 500);
-                m2.setMode(enabled, reversed);
-                m2.setWidth(PWM_PERIOD * throttle / 500);
-                break;
-            }
-
-            case IO_CMD_STOP: {
-                // stop
-                break;
-            }
-
-            case IO_MOD_GYRO_BIAS: {
-                const int16_t new_gyro_bias = command_data[0] * 1000L + command_data[1] * 100L + command_data[2] * 10L
-                        + command_data[3] - 5000L;
-                break;
-            }
-
-            case IO_MOD_TRANS_BIAS: {
-                const int16_t new_trans_bias = command_data[0] * 100L + command_data[1] * 10L + command_data[2] - 180L;
-                break;
-            }
-
-            default:
-                break;
-            }
-
-            const int calculated_rpm = ::abs(currentRate * float(60.0 * 0.5 / M_PI));
-            chprintf(ioChan, "%%%c%c%.4d", 'a' + 4, IO_INFO_ROB_RPM, calculated_rpm);
-        }
     }
 }
