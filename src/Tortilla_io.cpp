@@ -81,8 +81,7 @@ void Tortilla::ioLoop() {
             timeout_counter++;
             if (timeout_counter == IO_FREQ) {
                 // 1 second has passed since successful communication with PC
-                m1.setWidth(0);
-                m2.setWidth(0);
+                throttle = 0;
                 // failsafe stop
                 timeout_counter = 0;
             }
@@ -171,7 +170,7 @@ void Tortilla::ioLoop() {
                 chprintf(ioChan, "%%%c%c%s", 'a' + numChars, IO_INFO_MISC, strBuffer);
 
                 const bool enabled = !(spin == 0 || spin == -1);
-                const bool reversed = (spin < 0);
+                reversed = (spin < 0);
                 m1.setMode(enabled, reversed);
                 m2.setMode(enabled, reversed);
                 throttle = PWM_PERIOD * std::min(::abs(spin) - reversed, 499) / 499;
@@ -184,18 +183,27 @@ void Tortilla::ioLoop() {
             }
 
             case IO_CMD_STOP: {
-                // stop
+                throttle = 0;
+                m1.setMode(true);
+                m2.setMode(true);
                 break;
             }
 
             case IO_MOD_GYRO_BIAS: {
                 const int16_t new_gyro_bias = command_data[0] * 1000L + command_data[1] * 100L + command_data[2] * 10L
                         + command_data[3] - 5000L;
+                gyroTrim = new_gyro_bias * float(M_PI / 180.0);
+//                const size_t numChars = snprintf(strBuffer,
+//                        sizeof(strBuffer),
+//                        "trim: %ld",
+//                        int32_t(gyroTrim * (180.0 / M_PI)));
+//                chprintf(ioChan, "%%%c%c%s", 'a' + numChars, IO_INFO_MISC, strBuffer);
                 break;
             }
 
             case IO_MOD_TRANS_BIAS: {
                 const int16_t new_trans_bias = command_data[0] * 100L + command_data[1] * 10L + command_data[2] - 180L;
+                translationTrim = new_trans_bias;
                 break;
             }
 

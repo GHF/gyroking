@@ -33,7 +33,7 @@ class A4960 {
 public:
     A4960(SPIDriver *spip, PWMDriver *pwmp, pwmchannel_t channel);
 
-    void setMode(bool enable, bool reverse) {
+    void setMode(bool enable, bool reverse = false) {
         uint16_t cfg = config[0x7];
         cfg |= enable ? 0x1 : 0x0; // RUN bit
         cfg |= reverse ? 0x2 : 0x0; // DIR bit

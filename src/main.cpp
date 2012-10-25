@@ -32,16 +32,16 @@
 #include "chprintf.h"
 
 // heartbeat thread
-static WORKING_AREA(waHeartbeat, 128);
-NORETURN static void threadHeartbeat(void *arg) {
-    (void) arg;
-    chRegSetThreadName("heartbeat");
-    while (TRUE) {
-        palTogglePad(GPIOB, GPIOB_LED2);
-        chThdSleepMilliseconds(1000);
-    }
-    chThdExit(0);
-}
+//static WORKING_AREA(waHeartbeat, 128);
+//NORETURN static void threadHeartbeat(void *arg) {
+//    (void) arg;
+//    chRegSetThreadName("heartbeat");
+//    while (TRUE) {
+//        palTogglePad(GPIOB, GPIOB_LED2);
+//        chThdSleepMilliseconds(1000);
+//    }
+//    chThdExit(0);
+//}
 
 static WORKING_AREA(waIO, 8192);
 NORETURN static void threadIO(void *tortilla) {
@@ -93,10 +93,11 @@ int main(void) {
     Tortilla tortilla(m1, m2, adc, &TIMING_ICU, &BT_SERIAL);
 
     // start slave threads
-    chThdCreateStatic(waHeartbeat, sizeof(waHeartbeat), IDLEPRIO, tfunc_t(threadHeartbeat), nullptr);
+//    chThdCreateStatic(waHeartbeat, sizeof(waHeartbeat), IDLEPRIO, tfunc_t(threadHeartbeat), nullptr);
     chThdCreateStatic(waIO, sizeof(waIO), LOWPRIO, tfunc_t(threadIO), &tortilla);
 
     // done with setup
     palClearPad(GPIOC, GPIOC_LEDB);
+    palClearPad(GPIOB, GPIOB_LED2);
     tortilla.fastLoop();
 }

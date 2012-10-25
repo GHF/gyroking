@@ -47,8 +47,11 @@ Tortilla::Tortilla(A4960 &m1, A4960 &m2, ADS1259 &adc, ICUDriver *icup, SerialDr
         currentRate(0),
         theta(0),
         throttle(0),
+        reversed(false),
         joyAngle(0),
-        joyMag(0) {
+        joyMag(0),
+        gyroTrim(0),
+        translationTrim(0) {
 }
 
 void Tortilla::initGyroBias() {
@@ -65,7 +68,7 @@ void Tortilla::initGyroBias() {
         ticks += MS2ST(1);
         chThdSleepUntil(ticks);
     }
-    gyroBias = sumReadings / numReadings;
+    gyroBias = sumReadings / numReadings + 1100;
 }
 
 static constexpr float SCALE_RAW_TO_RADSEC = float(64000.0 * (M_PI / 180.0) / double(0x7FFFFFUL));
@@ -73,6 +76,11 @@ static constexpr float SCALE_RAW_TO_RADSEC = float(64000.0 * (M_PI / 180.0) / do
 static constexpr size_t LOOP_DELAY_US = 1000;
 static constexpr systime_t LOOP_DELAY = US2ST(LOOP_DELAY_US);
 static constexpr float DT = LOOP_DELAY_US / 1000000.0;
+
+template<typename T, typename Scalar>
+static inline T lerp(const T &a, const T &b, Scalar t) {
+    return a + t * (b - a);
+}
 
 void Tortilla::fastLoop() {
     initGyroBias();
@@ -83,30 +91,46 @@ void Tortilla::fastLoop() {
     while (true) {
         int32_t adcReading;
         if (adc.read(adcReading)) {
-            const float rate = SCALE_RAW_TO_RADSEC * (adcReading - gyroBias);
+            const float rate = SCALE_RAW_TO_RADSEC * (adcReading - gyroBias) + gyroTrim;
+            const float filteredRate = lerp(currentRate, rate, 0.1f);
 
             lastRate = currentRate;
-            currentRate = rate;
-            theta += (currentRate) * DT; // euler integration
-//            theta += 0.5f * (currentRate + lastRate) * DT; // trapezoidal integration
+            currentRate = filteredRate;
+//            theta += (currentRate) * DT; // euler integration
+            theta += 0.5f * (currentRate + lastRate) * DT; // trapezoidal integration
             theta = ::remainderf(theta, M_TWOPI);
         }
 
         pwmcnt_t m1Speed = throttle;
         pwmcnt_t m2Speed = throttle;
 
-        const bool blue = ::fabsf(theta) < float(M_PI / 10.0);
+        const bool blue = ::fabsf(theta) < float(M_PI / 6.0);
         palWritePad(GPIOC, GPIOC_LEDB, blue);
+        palWritePad(GPIOB, GPIOB_LED2, blue);
         if (joyMag == 0.f) {
-            const bool yellow = !blue && ::fabsf(::remainderf(theta * 5.f, M_TWOPI)) < float(M_PI_2);;
+            const bool yellow = !blue && ::fabsf(::remainderf(theta * 3.f, M_TWOPI)) < float(M_PI_2);
             palWritePad(GPIOB, GPIOB_LEDY, yellow);
+            palWritePad(GPIOB, GPIOB_LED1, yellow);
         } else {
-            const bool yellow = fabsf(::remainderf(theta - joyAngle, M_TWOPI)) < std::max(0.2f, ::fabsf(joyMag * M_PI_4));
-            if (yellow) {
+            // trim angle to advance by
+            const float thetaOffset = (reversed ? -1.f : 1.f) * currentRate * translationTrim * DT;
+            // joystick angle in robot coords
+            const float joyRel = ::remainderf(joyAngle - theta + thetaOffset, M_TWOPI);
+            const float joyRelOpp = ::remainderf(joyRel + M_PI, M_TWOPI);
+            const float slipRange = std::max(0.05f, ::fabsf(joyMag * float(M_PI / 30.0)));
+
+            if (::fabsf(joyRel) < slipRange) {
                 m1Speed = PWM_PERIOD;
-                m2Speed = 0;
+                m2Speed = std::max(1, throttle / 30);
+            } else if (::fabsf(joyRelOpp) < slipRange) {
+                m1Speed = std::max(1, throttle / 30);
+                m2Speed = PWM_PERIOD;
             }
+
+            const bool yellow = ::fabsf(::remainderf(joyAngle - theta, M_TWOPI))
+                    < std::max(0.2f, ::fabsf(joyMag * float(M_PI / 3.0)));
             palWritePad(GPIOB, GPIOB_LEDY, yellow);
+            palWritePad(GPIOB, GPIOB_LED1, yellow);
         }
 
         m1.setWidth(m1Speed);

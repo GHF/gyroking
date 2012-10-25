@@ -36,7 +36,7 @@
 #define M1_SPI (SPID2)
 #define M2_SPI (SPID3)
 
-#define PWM_FREQ 50000
+#define PWM_FREQ 20000
 #define PWM_PERIOD (STM32_TIMCLK1 / PWM_FREQ)
 
 #define M1_PWM (PWMD3)
@@ -71,8 +71,11 @@ protected:
     float theta;
 
     int throttle;
+    bool reversed;
     float joyAngle;
     float joyMag;
+    float gyroTrim;
+    int translationTrim;
 
     void initGyroBias();
 };
